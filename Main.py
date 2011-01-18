@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from Manager import Manager, Ticker
-from Simulator import Simulator
+from Simulator import Simulator, Tank
 from XMLRPCServer import XMLRPCServer
 from Constants import *
 import logging
@@ -47,13 +47,13 @@ def test_simulator():
     status = dict()
     differential = dict()
 
-    status[0] = (1, 3)
-    status[1] = (5, 6)
-    status[2] = (10, 10)
-    status[3] = (7, 3)
-    status[4] = (7, 1)
-    status[5] = (10, 3)
-    status[6] = (10, 1)
+    status[0] = Tank(0, (1, 3))
+    status[1] = Tank(1, (5, 6))
+    status[2] = Tank(1, (10, 10))
+    status[3] = Tank(1, (7, 3))
+    status[4] = Tank(0, (7, 1))
+    status[5] = Tank(0, (10, 3))
+    status[6] = Tank(1, (10, 1))
 
     differential[1] = {ACTION_MOVE: MOVE_UP, ACTION_SHOOT: (10, 10)}
     differential[2] = {ACTION_MOVE: MOVE_DOWN, ACTION_SHOOT: (1, 3)}

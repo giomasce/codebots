@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from Constants import *
+from threading import RLock
 
 MAX_SHOOT_DIST = 10
 MOVE_COORDS = {MOVE_UP: (0,1), MOVE_DOWN: (0,-1), MOVE_LEFT: (-1,0), MOVE_RIGHT: (1,0)}
@@ -26,7 +27,20 @@ FIELD_DIM = (15, 15)
 def dist1(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
+class Tank:
+    def __init__(self, team, position):
+        self.team = team
+        self.position = position
+
+    def clone(self):
+        return Tank(self.team, self.position)
+
+    def __repr__(self):
+        return "<Tank: team %d, pos %s>" % (self.team, repr(self.position))
+
 class Simulator:
+    tank_lock = RLock()
+
     def __init__(self, status):
         self.status = status
         self._build_position()
@@ -34,37 +48,38 @@ class Simulator:
 
     def _build_position(self):
         self.position = dict()
-        for k in self.status:
-            if self.status[k] in self.position:
-                raise ValueError("Two units in the same position!")
-            self.position[self.status[k]] = [k]
+        for t in self.status:
+            tank = self.status[t]
+            self.position[tank.position] = [t]
 
     def destroy_tank(self, t):
-        where = self.position[self.status[t]]
-        del where[where.index(t)]
+        where_del = self.position[self.status[t].position]
+        del where_del[where_del.index(t)]
         del self.status[t]
 
-    def create_tank(self, pos, t = None):
+    def create_tank(self, tank, t = None):
         if t == None:
-            t = self.new_tank
-            self.new_tank += 1
-        if pos not in self.position:
-            self.position[pos] = list()
-        self.position[pos].append(t)
-        self.status[t] = pos
+            with self.tank_lock:
+                t = self.new_tank
+                self.new_tank += 1
+        if tank.position not in self.position:
+            self.position[tank.position] = list()
+        self.position[tank.position].append(t)
+        self.status[t] = tank
         return t
 
     def move_tank(self, t, move):
-        newpos = (self.status[t][0] + MOVE_COORDS[move][0], self.status[t][1] + MOVE_COORDS[move][1])
+        tank = self.status[t].clone()
+        tank.position = (tank.position[0] + MOVE_COORDS[move][0], tank.position[1] + MOVE_COORDS[move][1])
         self.destroy_tank(t)
-        self.create_tank(newpos, t)
+        self.create_tank(tank, t)
 
     def integrate_shoots(self, differential):
         dead = list()
         for t in differential:
             if t in self.status and ACTION_SHOOT in differential[t]:
                 target = differential[t][ACTION_SHOOT]
-                if dist1(self.status[t], target) <= MAX_SHOOT_DIST and target in self.position:
+                if dist1(self.status[t].position, target) <= MAX_SHOOT_DIST and target in self.position:
                     [enemy] = self.position[target]
                     dead.append(enemy)
         for t in dead:
@@ -91,8 +106,8 @@ class Simulator:
         for y in reversed(range(FIELD_DIM[1])):
             for x in range(FIELD_DIM[0]):
                 if (x,y) in self.position:
-                    [unit] = self.position[(x,y)]
-                    print "%2d" % (unit),
+                    [t] = self.position[(x,y)]
+                    print "%2d/%1d" % (t, self.status[t].team),
                 else:
-                    print " .",
+                    print "   .",
             print
