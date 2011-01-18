@@ -28,6 +28,7 @@ class Manager:
     state = STATE_WAITING
     main_lock = ReadWriteLock()
     diff_lock = threading.RLock()
+    simulation_sync = threading.Condition()
 
     def add_request(self):
         request_time = time.time()
@@ -38,6 +39,8 @@ class Manager:
         diff_obtain_time = time.time()
         logging.debug("Obtain differential lock after %.3f seconds" % (diff_obtain_time - obtain_time))
         try:
+            # Store the request in the differential
+            time.sleep(1)
             pass
         finally:
             finish_time = time.time()
@@ -52,6 +55,7 @@ class Manager:
         logging.debug("Obtained read lock after %.3f seconds" % (obtain_time - request_time))
         try:
             # Read structures and return sensible information
+            time.sleep(1)
             pass
         finally:
             finish_time = time.time()
@@ -66,12 +70,19 @@ class Manager:
         self.state = self.STATE_SIMULATING
         try:
             # Execute a simulation step
+            time.sleep(1)
             pass
         finally:
             finish_time = time.time()
             logging.debug("Simulation took %.3f seconds" % (finish_time - obtain_time))
             self.state = self.STATE_WAITING
             self.main_lock.release()
+            with self.simulation_sync:
+                self.simulation_sync.notifyAll()
+
+    def wait_for_simulation(self):
+        with self.simulation_sync:
+            self.simulation_sync.wait()
 
 class Ticker(threading.Thread):
     def __init__(self, time, manager):
@@ -94,17 +105,3 @@ class Ticker(threading.Thread):
         self.again = False
         with self.waiter:
             self.waiter.notifyAll()
-
-if __name__ == "__main__":
-    logging.basicConfig(level = logging.DEBUG,
-                        format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-    manager = Manager()
-    ticker = Ticker(5.0, manager)
-    ticker.start()
-
-    # To stop the system with Ctrl-C
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        ticker.self_destruct()
