@@ -18,11 +18,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from Manager import Manager, Ticker
+from Simulator import Simulator
 from XMLRPCServer import XMLRPCServer
+from Constants import *
 import logging
 import time
 
-def main():
+def test_rpc():
     logging.basicConfig(level = logging.DEBUG,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
     manager = Manager()
@@ -41,5 +43,37 @@ def main():
     except KeyboardInterrupt:
         ticker.self_destruct()
 
+def test_simulator():
+    status = dict()
+    differential = dict()
+
+    status[0] = (1, 3)
+    status[1] = (5, 6)
+    status[2] = (10, 10)
+    status[3] = (7, 3)
+    status[4] = (7, 1)
+    status[5] = (10, 3)
+    status[6] = (10, 1)
+
+    differential[1] = {ACTION_MOVE: MOVE_UP, ACTION_SHOOT: (10, 10)}
+    differential[2] = {ACTION_MOVE: MOVE_DOWN, ACTION_SHOOT: (1, 3)}
+    differential[3] = {ACTION_MOVE: MOVE_DOWN}
+    differential[4] = {ACTION_MOVE: MOVE_UP}
+    differential[5] = {ACTION_MOVE: MOVE_DOWN, ACTION_SHOOT: (10, 1)}
+    differential[6] = {ACTION_MOVE: MOVE_UP}
+
+    simulator = Simulator(status)
+
+    print "BEFORE"
+    print simulator.position
+    print simulator.status
+    simulator.print_field()
+    simulator.integrate(differential)
+    print
+    print "AFTER"
+    print simulator.position
+    print simulator.status
+    simulator.print_field()
+
 if __name__ == "__main__":
-    main()
+    test_simulator()
