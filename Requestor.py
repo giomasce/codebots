@@ -20,16 +20,32 @@
 from xmlrpclib import ServerProxy
 import logging
 
+team = 0
+password = "abc"
+
 def main():
     logging.basicConfig(level = logging.DEBUG,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
     proxy = ServerProxy("http://localhost:8080")
+    logging.info("Logging in with team %s and password %s" % (team, password))
+    session = proxy.login(team, password)
+    logging.info("Initiated session %s" % (session))
+    #session = "lgpb1yqve5tn0ggu3rxoktmt112uthvfbgemnou8"
     logging.info("Sending add_request()")
-    proxy.add_request()
+    res = proxy.add_request(session)
+    logging.info("Response: %s" % (repr(res)))
     logging.info("Sending get_info()")
-    proxy.get_info()
+    res = proxy.get_info(session)
+    logging.info("Response: %s" % (repr(res)))
     logging.info("Sending wait_for_simulation()")
-    proxy.wait_for_simulation()
+    res = proxy.wait_for_simulation(session)
+    logging.info("Response: %s" % (repr(res)))
+    logging.info("Logging out")
+    res = proxy.logout(session)
+    logging.info("Response: %s" % (repr(res)))
+    logging.info("Sending add_request()")
+    res = proxy.add_request(session)
+    logging.info("Response: %s" % (repr(res)))
     logging.info("Finished!")
 
 if __name__ == "__main__":

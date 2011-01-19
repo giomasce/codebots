@@ -76,4 +76,4 @@ def test_simulator():
     simulator.print_field()
 
 if __name__ == "__main__":
-    test_simulator()
+    test_rpc()

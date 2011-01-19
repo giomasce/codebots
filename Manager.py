@@ -27,28 +27,29 @@ class Manager:
 
     state = STATE_WAITING
     main_lock = ReadWriteLock()
-    diff_lock = threading.RLock()
+    request_lock = threading.RLock()
     simulation_sync = threading.Condition()
 
-    def add_request(self):
+    def add_request(self, team):
         request_time = time.time()
         self.main_lock.acquireRead()
         obtain_time = time.time()
         logging.debug("Obtained read lock after %.3f seconds" % (obtain_time - request_time))
-        self.diff_lock.acquire()
-        diff_obtain_time = time.time()
-        logging.debug("Obtain differential lock after %.3f seconds" % (diff_obtain_time - obtain_time))
+        self.request_lock.acquire()
+        request_obtain_time = time.time()
+        logging.debug("Obtain request lock after %.3f seconds" % (request_obtain_time - obtain_time))
         try:
             # Store the request in the differential
             time.sleep(1)
             pass
         finally:
             finish_time = time.time()
-            logging.debug("Write request took %.3f seconds" % (finish_time - diff_obtain_time))
-            self.diff_lock.release()
+            logging.debug("Write request took %.3f seconds" % (finish_time - request_obtain_time))
+            self.request_lock.release()
             self.main_lock.release()
+        return True
 
-    def get_info(self):
+    def get_info(self, team):
         request_time = time.time()
         self.main_lock.acquireRead()
         obtain_time = time.time()
@@ -61,6 +62,7 @@ class Manager:
             finish_time = time.time()
             logging.debug("Read request took %.3f seconds" % (finish_time - obtain_time))
             self.main_lock.release()
+        return True
 
     def simulate(self):
         request_time = time.time()
@@ -80,9 +82,10 @@ class Manager:
             with self.simulation_sync:
                 self.simulation_sync.notifyAll()
 
-    def wait_for_simulation(self):
+    def wait_for_simulation(self, team):
         with self.simulation_sync:
             self.simulation_sync.wait()
+        return True
 
 class Ticker(threading.Thread):
     def __init__(self, time, manager):
