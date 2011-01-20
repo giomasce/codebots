@@ -17,12 +17,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
 from xmlrpclib import ServerProxy
-from Constants import *
+from Simulator import Simulator
 import logging
 
-team = 0
-password = "abc"
+team = -1
+password = "def"
 
 def main():
     logging.basicConfig(level = logging.DEBUG,
@@ -31,13 +32,17 @@ def main():
     logging.info("Logging in with team %s and password %s" % (team, password))
     session = proxy.login(team, password)
     logging.info("Initiated session %s" % (session))
-    #session = "lgpb1yqve5tn0ggu3rxoktmt112uthvfbgemnou8"
     try:
-        res = proxy.get_info(session)
-        turn_num = res['turn_num']
-        logging.info("Sending add_request()")
-        res = proxy.add_request(session, turn_num, {"5": {ACTION_MOVE: MOVE_DOWN}, "4": {ACTION_SHOOT: (7, 3)}})
-        logging.info("Response: %s" % (repr(res)))
+        while True:
+            #logging.info("Sending get_info()")
+            res = proxy.get_info(session)
+            #logging.info("Response: %s" % (repr(res)))
+            turn_num = res['turn_num']
+            simulator = Simulator.from_external_status(res['status'])
+            print "TURN %d" % (turn_num)
+            simulator.print_field()
+            print
+            proxy.wait_for_simulation(session)
     finally:
         logging.info("Logging out")
         res = proxy.logout(session)
@@ -46,3 +51,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

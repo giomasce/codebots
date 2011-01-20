@@ -34,7 +34,15 @@ class Manager:
 
     requests = []
 
+    def __init__(self, simulator):
+        self.simulator = simulator
+
     def add_request(self, team, turn, actions):
+        if team < 0:
+            logging.info("Rejecting add_request() from team %d" % (team))
+            return False
+        # Fix numbers in the request
+        actions = dict(map(lambda (x, y): (int(x), y), actions.iteritems()))
         request_time = time.time()
         self.main_lock.acquireRead()
         obtain_time = time.time()
@@ -48,6 +56,7 @@ class Manager:
                 self.requests.append((team, actions))
                 return True
             else:
+                logging.debug("Received request with mismatching turn number %d while at turn %d" % (turn, self.turn_num))
                 return False
         finally:
             finish_time = time.time()
@@ -62,7 +71,7 @@ class Manager:
         logging.debug("Obtained read lock after %.3f seconds" % (obtain_time - request_time))
         try:
             # Read structures and return sensible information
-            return {'turn_num': self.turn_num}
+            return {'turn_num': self.turn_num, 'status': self.simulator.get_external_status()}
         finally:
             finish_time = time.time()
             logging.debug("Read request took %.3f seconds" % (finish_time - obtain_time))
@@ -76,8 +85,9 @@ class Manager:
         self.state = self.STATE_SIMULATING
         try:
             # Execute a simulation step
-            time.sleep(1)
-            pass
+            differential = self.simulator.calculate_differential(self.requests)
+            self.simulator.integrate(differential)
+            self.requests = []
         finally:
             finish_time = time.time()
             logging.debug("Simulation for turn %d took %.3f seconds" % (self.turn_num, finish_time - obtain_time))

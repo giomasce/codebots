@@ -30,7 +30,7 @@ def dist1(a, b):
 class Tank:
     def __init__(self, team, position):
         self.team = team
-        self.position = position
+        self.position = tuple(position)
 
     def clone(self):
         return Tank(self.team, self.position)
@@ -44,13 +44,21 @@ class Simulator:
     def __init__(self, status):
         self.status = status
         self._build_position()
-        self.new_tank = len(self.status)
+        self.new_tank = 1 + max(self.status.keys())
 
     def _build_position(self):
         self.position = dict()
         for t in self.status:
             tank = self.status[t]
             self.position[tank.position] = [t]
+
+    def get_external_status(self):
+        return dict(map(lambda (x, y): (repr(x), y), self.status.iteritems()))
+
+    @staticmethod
+    def from_external_status(status):
+        fixed = dict(map(lambda (x, y): (int(x), Tank(**y)), status.iteritems()))
+        return Simulator(fixed)
 
     def destroy_tank(self, t):
         where_del = self.position[self.status[t].position]
@@ -78,7 +86,7 @@ class Simulator:
         dead = list()
         for t in differential:
             if t in self.status and ACTION_SHOOT in differential[t]:
-                target = differential[t][ACTION_SHOOT]
+                target = tuple(differential[t][ACTION_SHOOT])
                 if dist1(self.status[t].position, target) <= MAX_SHOOT_DIST and target in self.position:
                     [enemy] = self.position[target]
                     dead.append(enemy)
@@ -89,7 +97,9 @@ class Simulator:
         self.position = dict(filter(lambda (x, y): len(y) > 0, self.position.iteritems()))
 
     def detect_collisions(self):
-        self.position = dict(filter(lambda (x, y): len(y) <= 1, self.position.iteritems()))
+        dead = reduce(lambda x, y: x+y, filter(lambda x: len(x) > 1, self.position.values()), [])
+        for t in dead:
+            self.destroy_tank(t)
 
     def integrate_movements(self, differential):
         for t in differential:
@@ -107,7 +117,7 @@ class Simulator:
         for req in requests:
             (team, actions) = req
             for t, act in actions.iteritems():
-                if self.status[t].team == team:
+                if t in self.status and self.status[t].team == team:
                     if t not in differential:
                         differential[t] = dict(act)
                     else:

@@ -25,7 +25,7 @@ import logging
 
 INACTIVITY_TIMEOUT = 600.0
 
-passwords = {0: "abc", 1: "xyz"}
+passwords = {-1: "def", 0: "abc", 1: "xyz"}
 
 class XMLRPCServer(Thread):
     sessions = dict()

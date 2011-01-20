@@ -24,10 +24,29 @@ from Constants import *
 import logging
 import time
 
+status = dict()
+differential = dict()
+
+status[0] = Tank(0, (1, 3))
+status[1] = Tank(1, (5, 6))
+status[2] = Tank(1, (10, 10))
+status[3] = Tank(1, (7, 3))
+status[4] = Tank(0, (7, 1))
+status[5] = Tank(0, (10, 3))
+status[6] = Tank(1, (10, 1))
+
+differential[1] = {ACTION_MOVE: MOVE_UP, ACTION_SHOOT: (10, 10)}
+differential[2] = {ACTION_MOVE: MOVE_DOWN, ACTION_SHOOT: (1, 3)}
+differential[3] = {ACTION_MOVE: MOVE_DOWN}
+differential[4] = {ACTION_MOVE: MOVE_UP}
+differential[5] = {ACTION_MOVE: MOVE_DOWN, ACTION_SHOOT: (10, 1)}
+differential[6] = {ACTION_MOVE: MOVE_UP}
+
 def test_rpc():
     logging.basicConfig(level = logging.DEBUG,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-    manager = Manager()
+    simulator = Simulator(status)
+    manager = Manager(simulator)
     ticker = Ticker(5.0, manager)
     xmlrpcserver = XMLRPCServer(manager)
 
@@ -44,24 +63,6 @@ def test_rpc():
         ticker.self_destruct()
 
 def test_simulator():
-    status = dict()
-    differential = dict()
-
-    status[0] = Tank(0, (1, 3))
-    status[1] = Tank(1, (5, 6))
-    status[2] = Tank(1, (10, 10))
-    status[3] = Tank(1, (7, 3))
-    status[4] = Tank(0, (7, 1))
-    status[5] = Tank(0, (10, 3))
-    status[6] = Tank(1, (10, 1))
-
-    differential[1] = {ACTION_MOVE: MOVE_UP, ACTION_SHOOT: (10, 10)}
-    differential[2] = {ACTION_MOVE: MOVE_DOWN, ACTION_SHOOT: (1, 3)}
-    differential[3] = {ACTION_MOVE: MOVE_DOWN}
-    differential[4] = {ACTION_MOVE: MOVE_UP}
-    differential[5] = {ACTION_MOVE: MOVE_DOWN, ACTION_SHOOT: (10, 1)}
-    differential[6] = {ACTION_MOVE: MOVE_UP}
-
     simulator = Simulator(status)
 
     print "BEFORE"
