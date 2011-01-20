@@ -26,11 +26,15 @@ class Manager:
     STATE_WAITING, STATE_SIMULATING = range(2)
 
     state = STATE_WAITING
+    turn_num = 0
+
     main_lock = ReadWriteLock()
-    request_lock = threading.RLock()
+    request_lock = threading.RLock() # Maybe not necessary
     simulation_sync = threading.Condition()
 
-    def add_request(self, team):
+    requests = []
+
+    def add_request(self, team, turn, actions):
         request_time = time.time()
         self.main_lock.acquireRead()
         obtain_time = time.time()
@@ -39,15 +43,17 @@ class Manager:
         request_obtain_time = time.time()
         logging.debug("Obtain request lock after %.3f seconds" % (request_obtain_time - obtain_time))
         try:
-            # Store the request in the differential
-            time.sleep(1)
-            pass
+            # Store the request
+            if turn == self.turn_num:
+                self.requests.append((team, actions))
+                return True
+            else:
+                return False
         finally:
             finish_time = time.time()
             logging.debug("Write request took %.3f seconds" % (finish_time - request_obtain_time))
             self.request_lock.release()
             self.main_lock.release()
-        return True
 
     def get_info(self, team):
         request_time = time.time()
@@ -56,13 +62,11 @@ class Manager:
         logging.debug("Obtained read lock after %.3f seconds" % (obtain_time - request_time))
         try:
             # Read structures and return sensible information
-            time.sleep(1)
-            pass
+            return {'turn_num': self.turn_num}
         finally:
             finish_time = time.time()
             logging.debug("Read request took %.3f seconds" % (finish_time - obtain_time))
             self.main_lock.release()
-        return True
 
     def simulate(self):
         request_time = time.time()
@@ -76,8 +80,9 @@ class Manager:
             pass
         finally:
             finish_time = time.time()
-            logging.debug("Simulation took %.3f seconds" % (finish_time - obtain_time))
+            logging.debug("Simulation for turn %d took %.3f seconds" % (self.turn_num, finish_time - obtain_time))
             self.state = self.STATE_WAITING
+            self.turn_num += 1
             self.main_lock.release()
             with self.simulation_sync:
                 self.simulation_sync.notifyAll()

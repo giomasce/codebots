@@ -79,23 +79,23 @@ class XMLRPCServer(Thread):
             self.logout(session)
             return None
 
-    def add_request(self, session):
+    def add_request(self, session, *args, **kwargs):
         team = self.verify_session(session)
         if team == None:
             return None
-        return self.manager.add_request(team)
+        return self.manager.add_request(team, *args, **kwargs)
 
-    def get_info(self, session):
+    def get_info(self, session, *args, **kwargs):
         team = self.verify_session(session)
         if team == None:
             return None
-        return self.manager.get_info(team)
+        return self.manager.get_info(team, *args, **kwargs)
 
-    def wait_for_simulation(self, session):
+    def wait_for_simulation(self, session, *args, **kwargs):
         team = self.verify_session(session)
         if team == None:
             return None
-        return self.manager.wait_for_simulation(team)
+        return self.manager.wait_for_simulation(team, *args, **kwargs)
 
 if __name__ == "__main__":
     manager = Manager()

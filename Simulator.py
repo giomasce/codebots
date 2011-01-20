@@ -102,6 +102,18 @@ class Simulator:
         self.integrate_shoots(differential)
         self.integrate_movements(differential)
 
+    def calculate_differential(self, requests):
+        differential = {}
+        for req in requests:
+            (team, actions) = req
+            for t, act in actions.iteritems():
+                if self.status[t].team == team:
+                    if t not in differential:
+                        differential[t] = dict(act)
+                    else:
+                        differential[t].update(act)
+        return differential
+
     def print_field(self):
         for y in reversed(range(FIELD_DIM[1])):
             for x in range(FIELD_DIM[0]):
