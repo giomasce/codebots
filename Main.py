@@ -20,6 +20,7 @@
 from Manager import Manager, Ticker
 from Simulator import Simulator, Tank
 from XMLRPCServer import XMLRPCServer
+from PBRPCServer import PBRPCServer
 from Constants import *
 import logging
 import time
@@ -49,11 +50,12 @@ def test_rpc():
     manager = Manager(simulator)
     ticker = Ticker(5.0, manager)
     xmlrpcserver = XMLRPCServer(manager)
+    pbrpcserver = PBRPCServer(manager)
 
     logging.info("Starting main threads")
-
     ticker.start()
     xmlrpcserver.start()
+    pbrpcserver.start()
 
     # To stop the system with Ctrl-C
     try:

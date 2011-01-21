@@ -19,8 +19,12 @@
 
 
 from xmlrpclib import ServerProxy
-from Simulator import Simulator
+from Simulator import Simulator, Tank
+from protobuf.socketrpc import RpcService
+from protobuf.socketrpc.channel import SocketRpcChannel
 import logging
+import codebots_pb2
+import time
 
 team = -1
 password = "def"
@@ -49,6 +53,28 @@ def main():
         logging.info("Response: %s" % (repr(res)))
         logging.info("Finished!")
 
+def main_pb():
+
+    class StatusCallback:
+        def run(self, res):
+            print "TURN %d" % (res.turnNum)
+            status = dict([(tank.id, Tank(team = tank.team, position = (tank.posx, tank.posy))) for tank in res.fieldStatus.tanks])
+            simulator = Simulator(status)
+            simulator.print_field()
+            print
+
+    logging.basicConfig(level = logging.DEBUG,
+                        format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+    #service = RpcService(codebots_pb2.StatusService_Stub, "localhost", 12345)
+    channel = SocketRpcChannel("localhost", 12345)
+    controller = channel.newController()
+    service = codebots_pb2.StatusService_Stub(channel)
+    while True:
+        req = codebots_pb2.StatusRequest()
+        res = service.getStatus(controller, req, StatusCallback())
+        req = codebots_pb2.WaitForSimulationRequest()
+        res = service.waitForSimulation(controller, req)
+
 if __name__ == "__main__":
-    main()
+    main_pb()
 

@@ -18,24 +18,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from SimpleXMLRPCServer import SimpleXMLRPCServer
-from threading import Thread
-import random
-import time
-import logging
+from SessionServer import SessionServer
 
-INACTIVITY_TIMEOUT = 600.0
+class XMLRPCServer(SessionServer):
 
-passwords = {-1: "def", 0: "abc", 1: "xyz"}
-
-class XMLRPCServer(Thread):
-    sessions = dict()
-
-    def __init__(self, manager):
-        Thread.__init__(self)
-        self.daemon = True
-        self.manager = manager
-        self.rpcserver = SimpleXMLRPCServer(("localhost", 8080),
-                                            allow_none = True)
+    def __init__(self, manager, host = "localhost", port = 8080):
+        SessionServer.__init__(self, manager)
+        self.rpcserver = SimpleXMLRPCServer((host, port), allow_none = True)
         self.rpcserver.register_introspection_functions()
         self.rpcserver.register_function(self.add_request)
         self.rpcserver.register_function(self.get_info)
@@ -45,58 +34,3 @@ class XMLRPCServer(Thread):
 
     def run(self):
         self.rpcserver.serve_forever()
-
-    def login(self, team, password):
-        if team not in passwords:
-            return None
-        if password != passwords[team]:
-            return None
-        session = reduce(lambda x, y: x+y, map(lambda x: random.choice('qwertyuiopasdfghjklzxcvbnm1234567890'), range(40)))
-        timestamp = time.time()
-        self.sessions[session] = (team, timestamp)
-        logging.debug("Team %d started new session %s" % (team, session))
-        return session
-
-    def logout(self, session):
-        try:
-            del self.sessions[session]
-            logging.debug("Session %s closed" % (session))
-            return True
-        except:
-            return False
-
-    def verify_session(self, session):
-        try:
-            data = self.sessions[session]
-        except:
-            return None
-        (team, timestamp) = data
-        diff = time.time() - timestamp
-        if diff >= 0 and diff <= INACTIVITY_TIMEOUT:
-            return team
-        else:
-            logging.debug("Session %s has expired" % (session))
-            self.logout(session)
-            return None
-
-    def add_request(self, session, *args, **kwargs):
-        team = self.verify_session(session)
-        if team == None:
-            return None
-        return self.manager.add_request(team, *args, **kwargs)
-
-    def get_info(self, session, *args, **kwargs):
-        team = self.verify_session(session)
-        if team == None:
-            return None
-        return self.manager.get_info(team, *args, **kwargs)
-
-    def wait_for_simulation(self, session, *args, **kwargs):
-        team = self.verify_session(session)
-        if team == None:
-            return None
-        return self.manager.wait_for_simulation(team, *args, **kwargs)
-
-if __name__ == "__main__":
-    manager = Manager()
-    s = XMLRPCServer()
