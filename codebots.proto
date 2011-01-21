@@ -1,0 +1,27 @@
+
+message Tank {
+	required int32 id = 1;
+	required int32 team = 2;
+	required sint32 posx = 3;
+	required sint32 posy = 4;
+}
+
+message FieldStatus {
+	repeated Tank tanks = 1;
+}
+
+message StatusRequest {}
+
+message StatusResponse {
+	required FieldStatus fieldStatus = 1;
+	required int32 turnNum = 2;
+}
+
+message WaitForSimulationRequest {}
+message WaitForSimulationResponse {}
+
+service StatusService {
+	rpc getStatus(StatusRequest) returns(StatusResponse);
+	rpc waitForSimulation(WaitForSimulationRequest) returns(WaitForSimulationResponse);
+}
+
