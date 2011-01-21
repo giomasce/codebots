@@ -1,2 +1,3 @@
 *.pyc
 *~
+codebots_pb2.py
