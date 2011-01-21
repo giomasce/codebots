@@ -10,17 +10,43 @@ message FieldStatus {
 	repeated Tank tanks = 1;
 }
 
-message StatusRequest {}
-
-message StatusResponse {
-	required FieldStatus fieldStatus = 1;
-	required int32 turnNum = 2;
+message LoginRequest {
+	required sint32 team = 1;
+	required string password = 2;
 }
 
-message WaitForSimulationRequest {}
-message WaitForSimulationResponse {}
+message LoginResponse {
+	required string session = 1;
+}
 
-service StatusService {
+message LogoutRequest {
+	required string session = 1;
+}
+
+message LogoutResponse {
+	required bool success = 1;
+}
+
+message StatusRequest {
+	required string session = 1;
+}
+
+message StatusResponse {
+	required bool success = 1;
+	optional FieldStatus fieldStatus = 2;
+	optional int32 turnNum = 3;
+}
+
+message WaitForSimulationRequest {
+	required string session = 1;
+}
+message WaitForSimulationResponse {
+	required int32 turnNum = 1;
+}
+
+service CodebotsService {
+	rpc login(LoginRequest) returns(LoginResponse);
+	rpc logout(LogoutRequest) returns(LogoutResponse);
 	rpc getStatus(StatusRequest) returns(StatusResponse);
 	rpc waitForSimulation(WaitForSimulationRequest) returns(WaitForSimulationResponse);
 }

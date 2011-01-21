@@ -45,8 +45,8 @@ def main():
             simulator = Simulator.from_external_status(res['status'])
             print "TURN %d" % (turn_num)
             simulator.print_field()
-            print
             proxy.wait_for_simulation(session)
+            print
     finally:
         logging.info("Logging out")
         res = proxy.logout(session)
@@ -55,25 +55,28 @@ def main():
 
 def main_pb():
 
-    class StatusCallback:
-        def run(self, res):
+    logging.basicConfig(level = logging.DEBUG,
+                        format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+    logging.info("Logging in with team %s and password %s" % (team, password))
+    service = RpcService(codebots_pb2.CodebotsService_Stub, 12345, "localhost")
+    res = service.login(codebots_pb2.LoginRequest(team=team, password=password))
+    session = res.session
+    logging.info("Initiated session %s" % (session))
+    try:
+        while True:
+            res = service.getStatus(codebots_pb2.StatusRequest(session=session))
             print "TURN %d" % (res.turnNum)
             status = dict([(tank.id, Tank(team = tank.team, position = (tank.posx, tank.posy))) for tank in res.fieldStatus.tanks])
             simulator = Simulator(status)
             simulator.print_field()
+            res = service.waitForSimulation(codebots_pb2.WaitForSimulationRequest(session = session))
             print
-
-    logging.basicConfig(level = logging.DEBUG,
-                        format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-    #service = RpcService(codebots_pb2.StatusService_Stub, "localhost", 12345)
-    channel = SocketRpcChannel("localhost", 12345)
-    controller = channel.newController()
-    service = codebots_pb2.StatusService_Stub(channel)
-    while True:
-        req = codebots_pb2.StatusRequest()
-        res = service.getStatus(controller, req, StatusCallback())
-        req = codebots_pb2.WaitForSimulationRequest()
-        res = service.waitForSimulation(controller, req)
+    except KeyboardInterrupt:
+        logging.info("Shutting down")
+    finally:
+        logging.info("Logging out")
+        res = service.logout(codebots_pb2.LogoutRequest(session = session))
+        logging.info("Finished!")        
 
 if __name__ == "__main__":
     main_pb()
