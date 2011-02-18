@@ -24,6 +24,7 @@ from PBRPCServer import PBRPCServer
 from Constants import *
 import logging
 import time
+import random
 
 status = dict()
 differential = dict()
@@ -46,11 +47,21 @@ differential[6] = {ACTION_MOVE: MOVE_UP}
 def test_rpc():
     logging.basicConfig(level = logging.DEBUG,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
-    simulator = Simulator(status)
+    simulator = Simulator()
     manager = Manager(simulator)
-    ticker = Ticker(5.0, manager)
+    ticker = Ticker(1.0, manager)
     xmlrpcserver = XMLRPCServer(manager)
     pbrpcserver = PBRPCServer(manager)
+
+    # Add some random tanks
+    for team in range(4):
+        for tank in range(100):
+            retry = True
+            while retry:
+                pos = (random.randint(-100, 100), random.randint(-100, 100))
+                if pos not in simulator.position:
+                    simulator.create_tank(Tank(team, pos))
+                    retry = False
 
     logging.info("Starting main threads")
     ticker.start()
