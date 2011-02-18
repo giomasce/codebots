@@ -59,8 +59,10 @@ class SessionServer(Thread):
         except:
             return None
         (team, timestamp) = data
-        diff = time.time() - timestamp
+        now = time.time()
+        diff = now - timestamp
         if diff >= 0 and diff <= INACTIVITY_TIMEOUT:
+            self.sessions[session] = (team, now)
             return team
         else:
             logging.debug("Session %s has expired" % (session))
