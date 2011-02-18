@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 from xmlrpclib import ServerProxy
 from Simulator import Simulator, Tank
 from protobuf.socketrpc import RpcService
@@ -54,7 +53,6 @@ def main():
         logging.info("Finished!")
 
 def main_pb():
-
     logging.basicConfig(level = logging.DEBUG,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
     logging.info("Logging in with team %s and password %s" % (team, password))

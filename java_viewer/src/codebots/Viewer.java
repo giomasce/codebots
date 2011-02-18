@@ -18,7 +18,9 @@ public class Viewer {
 		JFrame frame = new JFrame("Codebots viewer");
 		frame.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent we) {
-				Viewer.this.communicator.terminate();
+				try {
+					Viewer.this.communicator.terminate();
+				} catch (Exception e) {}
 				System.exit(0);
 			}
 		});
