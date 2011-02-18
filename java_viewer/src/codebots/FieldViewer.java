@@ -84,6 +84,8 @@ implements MouseListener, MouseMotionListener, MouseWheelListener {
 		int squareNumY = height / (2 * (int) this.squareSide) + 2;
 		/*int squareNumX = 2;
 		int squareNumY = 2;*/
+		g.setColor(Color.WHITE);
+		g.fillRect(0, 0, width, height);
 		Point centralSquare = this.realToSquare(this.viewToReal(new Point(width/2, height/2)));
 		for (int x = centralSquare.x - squareNumX; x <= centralSquare.x + squareNumX; x++) {
 			for (int y = centralSquare.y - squareNumY; y <= centralSquare.y + squareNumY; y++) {
