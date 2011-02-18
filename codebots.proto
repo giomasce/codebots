@@ -1,4 +1,6 @@
 
+option java_package = "codebots.protobuf";
+
 message Tank {
 	required int32 id = 1;
 	required int32 team = 2;

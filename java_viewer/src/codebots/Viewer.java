@@ -18,6 +18,8 @@ public class Viewer {
 		FieldViewer fieldViewer = new FieldViewer();
 		frame.setContentPane(fieldViewer);
 		frame.setVisible(true);
+		Communicator comm = new Communicator(-1, "def", "localhost", 12345, fieldViewer);
+		comm.start();
 	}
 
 }
