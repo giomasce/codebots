@@ -1,17 +1,12 @@
 package codebots;
 
-import java.awt.Color;
-import java.awt.Point;
-import java.util.HashMap;
-import java.util.Map;
-
 import codebots.protobuf.Codebots.CodebotsService;
-import codebots.protobuf.Codebots.FieldStatus;
 import codebots.protobuf.Codebots.LoginRequest;
 import codebots.protobuf.Codebots.LoginResponse;
+import codebots.protobuf.Codebots.LogoutRequest;
+import codebots.protobuf.Codebots.LogoutResponse;
 import codebots.protobuf.Codebots.StatusRequest;
 import codebots.protobuf.Codebots.StatusResponse;
-import codebots.protobuf.Codebots.Tank;
 import codebots.protobuf.Codebots.WaitForSimulationRequest;
 import codebots.protobuf.Codebots.WaitForSimulationResponse;
 
@@ -25,35 +20,38 @@ public class Communicator extends Thread {
 	private String host;
 	private int port;
 	
-	private FieldViewer fieldViewer;
+	private ViewerPanel panel;
 	
 	private String session = null;
+	private boolean terminating = false;
 	
 	private SocketRpcChannel channel;
 	private SocketRpcController controller;
 	private CodebotsServiceWrapper service;
 
-	public Communicator(int team, String password, String host, int port, FieldViewer fieldViewer) {
+	public Communicator(int team, String password, String host, int port, ViewerPanel panel) {
 		this.team = team;
 		this.password = password;
 		this.host = host;
 		this.port = port;
-		this.fieldViewer = fieldViewer;
+		this.panel = panel;
 	}
 	
 	public void run() {
 		this.connect();
 		if (this.login()) {
-			this.getStatus();
-			while (true) {
-				// Request the status
-				Map<Point, Color> data = this.getStatus();
-				this.fieldViewer.setData(data);
+			while (!this.terminating) {
+				this.panel.setStatus(this.getStatus());
 				this.waitForSimulation();
 			}
 		} else {
 			System.err.println("Couldn't login, aborting...");
 		}
+	}
+	
+	public void terminate() {
+		this.terminating = true;
+		this.logout();
 	}
 	
 	protected void connect() {
@@ -76,28 +74,32 @@ public class Communicator extends Thread {
 		return true;
 	}
 	
-	protected Map<Point, Color> getStatus() {
+	protected StatusResponse getStatus() {
 		StatusRequest.Builder reqBuilder = StatusRequest.newBuilder();
 		reqBuilder.setSession(this.session);
 		StatusResponse res = this.service.getStatus(reqBuilder.build());
 		//System.err.println("status " + res);
 		if (res.getSuccess()) {
-			FieldStatus field = res.getFieldStatus();
-			HashMap<Point, Color> data = new HashMap<Point, Color>();
-			for (Tank tank: field.getTanksList()) {
-				data.put(new Point(tank.getPosx(), tank.getPosy()), tank.getTeam() == 0 ? Color.RED : Color.GREEN);
-			}
-			return data;
+			return res;
 		} else {
 			return null;
 		}
 	}
 	
-	protected void waitForSimulation() {
+	protected int waitForSimulation() {
 		WaitForSimulationRequest.Builder reqBuilder = WaitForSimulationRequest.newBuilder();
 		reqBuilder.setSession(this.session);
-		@SuppressWarnings("unused")
 		WaitForSimulationResponse res = this.service.waitForSimulation(reqBuilder.build());
-		return;
+		return res.getTurnNum();
+	}
+	
+	protected boolean logout() {
+		if (this.session == null) {
+			return true;
+		}
+		LogoutRequest.Builder reqBuilder = LogoutRequest.newBuilder();
+		reqBuilder.setSession(this.session);
+		LogoutResponse res = this.service.logout(reqBuilder.build());
+		return res.getSuccess();
 	}
 }

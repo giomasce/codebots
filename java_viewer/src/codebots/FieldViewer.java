@@ -1,6 +1,7 @@
 package codebots;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
@@ -19,8 +20,9 @@ implements MouseListener, MouseMotionListener, MouseWheelListener {
 
 	private static final long serialVersionUID = 1L;
 
-	private static final double SMALL_ZOOM_THRESHOLD = 5.0;
-	private static final double ZOOM_FACTOR = 1.1;
+	public static final double SMALL_ZOOM_THRESHOLD = 7.0;
+	public static final double ZOOM_FACTOR = 1.1;
+	public static final int BORDER_THRESHOLD = 7;
 
 	private Point relativePosition = new Point(0, 0);
 	private double squareSide = 10.0;
@@ -29,14 +31,11 @@ implements MouseListener, MouseMotionListener, MouseWheelListener {
 	private Point selectedPoint = null;
 	
 	public FieldViewer() {
-		/*data.put(new Point(0, 0), Color.GREEN);
-		data.put(new Point(0, 1), Color.RED);
-		data.put(new Point(10, 10), Color.BLUE);
-		data.put(new Point(10, 11), Color.CYAN);
-		data.put(new Point(11, 10), Color.ORANGE);*/
 		this.addMouseListener(this);
 		this.addMouseMotionListener(this);
 		this.addMouseWheelListener(this);
+		this.setMinimumSize(new Dimension(100, 100));
+		this.setPreferredSize(new Dimension(100, 100));
 	}
 	
 	@SuppressWarnings("unused")
@@ -62,12 +61,19 @@ implements MouseListener, MouseMotionListener, MouseWheelListener {
 		Point ll = base;
 		Point lr = new Point(base.x + (int) this.squareSide, base.y);
 		Point ul = new Point(base.x, base.y + (int) this.squareSide);
-		g.setColor(Color.BLACK);
-		g.drawLine(ll.x, ll.y, lr.x, lr.y);
-		g.drawLine(ll.x, ll.y, ul.x, ul.y);
-		if (data.containsKey(square)) {
-			g.setColor(data.get(square));
-			g.fillRect(base.x + 1, base.y + 1, (int) this.squareSide - 1, (int) this.squareSide - 1);
+		if (this.squareSide >= BORDER_THRESHOLD) {
+			g.setColor(Color.BLACK);
+			g.drawLine(ll.x, ll.y, lr.x, lr.y);
+			g.drawLine(ll.x, ll.y, ul.x, ul.y);
+			if (data.containsKey(square)) {
+				g.setColor(data.get(square));
+				g.fillRect(base.x + 1, base.y + 1, (int) this.squareSide - 1, (int) this.squareSide - 1);
+			}
+		} else {
+			if (data.containsKey(square)) {
+				g.setColor(data.get(square));
+				g.fillRect(base.x, base.y, (int) this.squareSide, (int) this.squareSide);
+			}
 		}
 	}
 
@@ -84,6 +90,11 @@ implements MouseListener, MouseMotionListener, MouseWheelListener {
 				this.drawSquare(g, new Point(x, y));
 			}
 		}
+		g.setColor(Color.BLACK);
+		g.drawLine(0, 0, width-1, 0);
+		g.drawLine(width-1, 0, width-1, height-1);
+		g.drawLine(width-1, height-1, 0, height-1);
+		g.drawLine(0, height-1, 0, 0);
 	}
 	
 	public synchronized void setData(Map<Point, Color> data) {
