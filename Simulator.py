@@ -41,10 +41,13 @@ class Tank:
 class Simulator:
     tank_lock = RLock()
 
-    def __init__(self, status):
+    def __init__(self, status = dict()):
         self.status = status
         self._build_position()
-        self.new_tank = 1 + max(self.status.keys())
+        if len(self.status) >= 1:
+            self.new_tank = 1 + max(self.status.keys())
+        else:
+            self.new_tank = 1
 
     def _build_position(self):
         self.position = dict()
