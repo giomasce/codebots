@@ -25,16 +25,16 @@ import logging
 import codebots_pb2
 import time
 import random
-
-team = 1
-password = "xyz"
+import sys
 
 def main():
     logging.basicConfig(level = logging.DEBUG,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
+    team = int(sys.argv[1])
+    password = sys.argv[2]
     logging.info("Logging in with team %s and password %s" % (team, password))
     service = RpcService(codebots_pb2.CodebotsService_Stub, 12345, "localhost")
-    res = service.login(codebots_pb2.LoginRequest(team=team, password=password))
+    res = service.login(codebots_pb2.LoginRequest(team = team, password = password))
     session = res.session
     logging.info("Initiated session %s" % (session))
     try:
