@@ -24,7 +24,7 @@ import logging
 
 INACTIVITY_TIMEOUT = 600.0
 
-passwords = {-1: "def", 0: "abc", 1: "xyz"}
+passwords = {-1: "def", 0: "abc", 1: "xyz", 2: "qwe", 3: "rty"}
 
 class SessionServer(Thread):
     sessions = dict()
