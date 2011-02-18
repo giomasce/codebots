@@ -46,10 +46,39 @@ message WaitForSimulationResponse {
 	required int32 turnNum = 1;
 }
 
+enum Movement {
+	UP = 0;
+	DOWN = 1;
+	RIGHT = 2;
+	LEFT = 3;
+}
+
+message Location {
+	required int32 x = 1;
+	required int32 y = 2;
+}
+
+message TankRequest {
+	required int32 id = 1;
+	optional Movement move = 2;
+	optional Location shoot = 3;
+}
+
+message AddRequestsRequest {
+	required string session = 1;
+	repeated TankRequest requests = 2;
+	required int32 turn = 3;
+}
+
+message AddRequestsResponse {
+	required bool success = 1;
+}
+
 service CodebotsService {
 	rpc login(LoginRequest) returns(LoginResponse);
 	rpc logout(LogoutRequest) returns(LogoutResponse);
 	rpc getStatus(StatusRequest) returns(StatusResponse);
 	rpc waitForSimulation(WaitForSimulationRequest) returns(WaitForSimulationResponse);
+	rpc addRequests(AddRequestsRequest) returns(AddRequestsResponse);
 }
 

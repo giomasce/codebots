@@ -19,8 +19,14 @@
 
 from SessionServer import SessionServer
 from protobuf.socketrpc.server import SocketRpcServer
+from Constants import *
 import codebots_pb2
 import logging
+
+MOVEMENT_TABLE = { codebots_pb2.UP: MOVE_UP,
+                   codebots_pb2.DOWN: MOVE_DOWN,
+                   codebots_pb2.RIGHT: MOVE_RIGHT,
+                   codebots_pb2.LEFT: MOVE_LEFT }
 
 class PBRPCImpl(codebots_pb2.CodebotsService):
 
@@ -66,6 +72,23 @@ class PBRPCImpl(codebots_pb2.CodebotsService):
         else:
             self.manager.wait_for_simulation(team)
             res.turnNum = self.manager.turn_num
+        done.run(res)
+
+    def addRequests(self, controller, request, done):
+        team = self.session_server.verify_session(request.session)
+        res = codebots_pb2.AddRequestsResponse()
+        if team == None:
+            res.success = False
+        else:
+            reqs = {}
+            for r in request.requests:
+                reqs[r.id] = dict()
+                if r.HasField("move"):
+                    reqs[r.id][ACTION_MOVE] = MOVEMENT_TABLE[r.move]
+                if r.HasField("shoot"):
+                    reqs[r.id][ACTION_SHOOT] = (r.shoot.x, r.shoot.y)
+            self.manager.add_request(team, request.turn, reqs)
+            res.success = True
         done.run(res)
 
 class PBRPCFilter(logging.Filter):
