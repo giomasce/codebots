@@ -44,7 +44,7 @@ differential[4] = {ACTION_MOVE: MOVE_UP}
 differential[5] = {ACTION_MOVE: MOVE_DOWN, ACTION_SHOOT: (10, 1)}
 differential[6] = {ACTION_MOVE: MOVE_UP}
 
-def test_rpc():
+def main():
     logging.basicConfig(level = logging.DEBUG,
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s')
     simulator = Simulator()
@@ -65,7 +65,8 @@ def test_rpc():
 
     logging.info("Starting main threads")
     ticker.start()
-    xmlrpcserver.start()
+    # The XML-RPC server isn't maintained at the moment
+    #xmlrpcserver.start()
     pbrpcserver.start()
 
     # To stop the system with Ctrl-C
@@ -90,4 +91,4 @@ def test_simulator():
     simulator.print_field()
 
 if __name__ == "__main__":
-    test_rpc()
+    main()

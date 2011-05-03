@@ -42,13 +42,14 @@ class SessionServer(Thread):
         session = reduce(lambda x, y: x+y, map(lambda x: random.choice('qwertyuiopasdfghjklzxcvbnm1234567890'), range(40)))
         timestamp = time.time()
         self.sessions[session] = (team, timestamp)
-        logging.debug("Team %d started new session %s" % (team, session))
+        logging.info("Team %d started new session %s" % (team, session))
         return session
 
     def logout(self, session):
         try:
+            (team, timestamp) = self.sessions[session]
             del self.sessions[session]
-            logging.debug("Session %s closed" % (session))
+            logging.info("Session %s for team %d closed" % (session, team))
             return True
         except:
             return False
@@ -65,7 +66,7 @@ class SessionServer(Thread):
             self.sessions[session] = (team, now)
             return team
         else:
-            logging.debug("Session %s has expired" % (session))
+            logging.info("Session %s has expired" % (session))
             self.logout(session)
             return None
 
