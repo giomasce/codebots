@@ -82,6 +82,12 @@ class SessionServer(Thread):
             return None
         return self.manager.get_info(team, *args, **kwargs)
 
+    def get_short_info(self, session, *args, **kwargs):
+        team = self.verify_session(session)
+        if team == None:
+            return None
+        return self.manager.get_short_info(team, *args, **kwargs)
+
     def wait_for_simulation(self, session, *args, **kwargs):
         team = self.verify_session(session)
         if team == None:

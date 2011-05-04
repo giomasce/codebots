@@ -39,6 +39,15 @@ message StatusResponse {
 	optional int32 turnNum = 3;
 }
 
+message ShortStatusRequest {
+	required string session = 1;
+}
+
+message ShortStatusResponse {
+	required bool success = 1;
+	optional int32 turnNum = 3;
+}
+
 message WaitForSimulationRequest {
 	required string session = 1;
 }
@@ -74,11 +83,23 @@ message AddRequestsResponse {
 	required bool success = 1;
 }
 
+message GetDifferentialRequest {
+	required string session = 1;
+	optional int32 turn = 2;
+}
+
+message GetDifferentialResponse {
+	required bool success = 1;
+	repeated TankRequest actions = 2;
+}
+
 service CodebotsService {
 	rpc login(LoginRequest) returns(LoginResponse);
 	rpc logout(LogoutRequest) returns(LogoutResponse);
 	rpc getStatus(StatusRequest) returns(StatusResponse);
+	rpc getShortStatus(ShortStatusRequest) returns(ShortStatusResponse);
 	rpc waitForSimulation(WaitForSimulationRequest) returns(WaitForSimulationResponse);
 	rpc addRequests(AddRequestsRequest) returns(AddRequestsResponse);
+	rpc getDifferential(GetDifferentialRequest) returns(GetDifferentialResponse);
 }
 

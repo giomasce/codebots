@@ -23,11 +23,6 @@ from Constants import *
 import codebots_pb2
 import logging
 
-MOVEMENT_TABLE = { codebots_pb2.UP: MOVE_UP,
-                   codebots_pb2.DOWN: MOVE_DOWN,
-                   codebots_pb2.RIGHT: MOVE_RIGHT,
-                   codebots_pb2.LEFT: MOVE_LEFT }
-
 class PBRPCImpl(codebots_pb2.CodebotsService):
 
     def __init__(self, manager, session_server):
@@ -64,6 +59,16 @@ class PBRPCImpl(codebots_pb2.CodebotsService):
             res.success = True
         done.run(res)
 
+    def getShortStatus(self, controller, request, done):
+        team = self.session_server.verify_session(request.session)
+        res = codebots_pb2.ShortStatusResponse()
+        if team == None:
+            res.success = False
+        else:
+            res.turnNum = self.manager.turn_num
+            res.success = True
+        done.run(res)
+
     def waitForSimulation(self, controller, request, done):
         team = self.session_server.verify_session(request.session)
         res = codebots_pb2.WaitForSimulationResponse()
@@ -84,11 +89,24 @@ class PBRPCImpl(codebots_pb2.CodebotsService):
             for r in request.requests:
                 reqs[r.id] = dict()
                 if r.HasField("move"):
-                    reqs[r.id][ACTION_MOVE] = MOVEMENT_TABLE[r.move]
+                    reqs[r.id][ACTION_MOVE] = FROM_PROTOBUF_COORDS[r.move]
                 if r.HasField("shoot"):
                     reqs[r.id][ACTION_SHOOT] = (r.shoot.x, r.shoot.y)
             self.manager.add_request(team, request.turn, reqs)
             res.success = True
+        done.run(res)
+
+    def getDifferential(self, controller, request, done):
+        team = self.session_server.verify_session(request.session)
+        res = codebots_pb2.GetDifferentialResponse()
+        if team == None:
+            res.success = False
+        else:
+            differential = self.manager.get_differential(request.turn)
+            if differential != None:
+                res = differential.to_protobuf()
+            else:
+                res.success = False
         done.run(res)
 
 class PBRPCFilter(logging.Filter):

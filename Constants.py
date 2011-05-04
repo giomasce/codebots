@@ -17,5 +17,18 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import codebots_pb2
+
+def invert_dict(x):
+    y = dict()
+    for k, v in x.iteritems():
+        y[v] = k
+    return y
+
 ACTION_MOVE, ACTION_SHOOT = 'move', 'shoot'
 MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT = 'up', 'down', 'left', 'right'
+TO_PROTOBUF_COORDS = { MOVE_UP: codebots_pb2.UP,
+                       MOVE_DOWN: codebots_pb2.DOWN,
+                       MOVE_RIGHT: codebots_pb2.RIGHT,
+                       MOVE_LEFT: codebots_pb2.LEFT }
+FROM_PROTOBUF_COORDS = invert_dict(TO_PROTOBUF_COORDS)

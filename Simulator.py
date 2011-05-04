@@ -19,6 +19,7 @@
 
 from Constants import *
 from threading import RLock
+import codebots_pb2
 
 MAX_SHOOT_DIST = 10
 MOVE_COORDS = {MOVE_UP: (0,1), MOVE_DOWN: (0,-1), MOVE_LEFT: (-1,0), MOVE_RIGHT: (1,0)}
@@ -37,6 +38,39 @@ class Tank:
 
     def __repr__(self):
         return "<Tank: team %d, pos %s>" % (self.team, repr(self.position))
+
+
+class Differential(dict):
+
+    def add_action(self, t, act):
+        if t not in self:
+            self[t] = dict(act)
+        else:
+            self[t].update(act)
+
+    def to_protobuf(self):
+        res = codebots_pb2.GetDifferentialResponse()
+        for t in self.keys():
+            tmp = res.actions.add()
+            tmp.id = t
+            if ACTION_MOVE in self[t]:
+                tmp.move = TO_PROTOBUF_COORDS[self[t][ACTION_MOVE]]
+            if ACTION_SHOOT in self[t]:
+                tmp.shoot.x, tmp.shoot.y = self[t][ACTION_SHOOT]
+        res.success = True
+        return res
+
+    @staticmethod
+    def from_protobuf(pb):
+        d = Differential()
+        for tmp in pb.actions:
+            t = tmp.id
+            d[t] = dict()
+            if tmp.HasField("move"):
+                d[t][ACTION_MOVE] = FROM_PROTOBUF_COORDS[tmp.move]
+            if tmp.HasField("shoot"):
+                d[t][ACTION_SHOOT] = (tmp.shoot.x, tmp.shoot.y)
+        return d
 
 class Simulator:
     tank_lock = RLock()
@@ -116,15 +150,12 @@ class Simulator:
         self.integrate_movements(differential)
 
     def calculate_differential(self, requests):
-        differential = {}
+        differential = Differential()
         for req in requests:
             (team, actions) = req
             for t, act in actions.iteritems():
                 if t in self.status and self.status[t].team == team:
-                    if t not in differential:
-                        differential[t] = dict(act)
-                    else:
-                        differential[t].update(act)
+                    differential.add_action(t, act)
         return differential
 
     def print_field(self):

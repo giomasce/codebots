@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from Constants import *
-from Simulator import Simulator, Tank
+from Simulator import Simulator, Tank, Differential
 from protobuf.socketrpc import RpcService
 from protobuf.socketrpc.channel import SocketRpcChannel
 import logging
@@ -39,16 +39,29 @@ def main():
     logging.info("Initiated session %s" % (session))
     try:
         while True:
+            # Getting the status (a bit stupid, but I need testing)
+            res = service.getShortStatus(codebots_pb2.ShortStatusRequest(session = session))
+            turn = res.turnNum
             res = service.getStatus(codebots_pb2.StatusRequest(session = session))
-            print "TURN %d" % (res.turnNum)
-            req = codebots_pb2.AddRequestsRequest(session = session, turn = res.turnNum)
-            for tank in res.fieldStatus.tanks:
+            fieldStatus = res.fieldStatus
+            print "TURN %d" % (turn)
+
+            # Getting last differential
+            res = service.getDifferential(codebots_pb2.GetDifferentialRequest(session = session, turn = turn-1))
+            print Differential.from_protobuf(res)
+
+            # Performing a random request
+            req = codebots_pb2.AddRequestsRequest(session = session, turn = turn)
+            for tank in fieldStatus.tanks:
                 tankReq = req.requests.add()
                 tankReq.id = tank.id
                 tankReq.move = random.randint(0, 3)
             res = service.addRequests(req)
             print res
+
+            # Waiting for next step
             res = service.waitForSimulation(codebots_pb2.WaitForSimulationRequest(session = session))
+            
             print
     except KeyboardInterrupt:
         logging.info("Shutting down")

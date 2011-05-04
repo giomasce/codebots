@@ -33,6 +33,8 @@ class Manager:
     simulation_sync = threading.Condition()
 
     requests = []
+    last_differential = None
+    last_differential_turn = None
 
     def __init__(self, simulator):
         self.simulator = simulator
@@ -49,7 +51,7 @@ class Manager:
         logging.debug("Obtained read lock after %.3f seconds" % (obtain_time - request_time))
         self.request_lock.acquire()
         request_obtain_time = time.time()
-        logging.debug("Obtain request lock after %.3f seconds" % (request_obtain_time - obtain_time))
+        logging.debug("Obtained request lock after %.3f seconds" % (request_obtain_time - obtain_time))
         try:
             # Store the request
             if turn == self.turn_num:
@@ -77,6 +79,19 @@ class Manager:
             logging.debug("Read request took %.3f seconds" % (finish_time - obtain_time))
             self.main_lock.release()
 
+    def get_short_info(self, team):
+        request_time = time.time()
+        self.main_lock.acquireRead()
+        obtain_time = time.time()
+        logging.debug("Obtained read lock after %.3f seconds" % (obtain_time - request_time))
+        try:
+            # Read structures and return sensible information
+            return {'turn_num': self.turn_num}
+        finally:
+            finish_time = time.time()
+            logging.debug("Read request took %.3f seconds" % (finish_time - obtain_time))
+            self.main_lock.release()
+
     def simulate(self):
         request_time = time.time()
         self.main_lock.acquireWrite()
@@ -85,9 +100,10 @@ class Manager:
         self.state = self.STATE_SIMULATING
         try:
             # Execute a simulation step
-            differential = self.simulator.calculate_differential(self.requests)
-            self.simulator.integrate(differential)
+            self.last_differential = self.simulator.calculate_differential(self.requests)
+            self.simulator.integrate(self.last_differential)
             self.requests = []
+            self.last_differential_turn = self.turn_num
         finally:
             finish_time = time.time()
             logging.debug("Simulation for turn %d took %.3f seconds" % (self.turn_num, finish_time - obtain_time))
@@ -96,6 +112,21 @@ class Manager:
             self.main_lock.release()
             with self.simulation_sync:
                 self.simulation_sync.notifyAll()
+
+    def get_differential(self, turn):
+        request_time = time.time()
+        self.main_lock.acquireWrite()
+        obtain_time = time.time()
+        logging.debug("Obtained write read after %.3f seconds" % (obtain_time - request_time))
+        try:
+            if turn == self.last_differential_turn:
+                return self.last_differential
+            else:
+                return None
+        finally:
+            finish_time = time.time()
+            logging.debug("Differential request took %.3f seconds" % (finish_time - obtain_time))
+            self.main_lock.release()
 
     def wait_for_simulation(self, team):
         with self.simulation_sync:
